@@ -1,0 +1,76 @@
+
+@media print {
+  /* Ocultar elementos innecesarios para la impresión */
+  header, nav, button, .no-print {
+    display: none !important;
+  }
+  
+  /* Ajustar tamaño de papel y márgenes */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+  
+  /* Forzar el fondo blanco para la impresión */
+  body {
+    background-color: white !important;
+    font-size: 12pt;
+  }
+  
+  /* Asegurar que el contenido de impresión ocupe toda la página */
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background-color: white !important;
+  }
+  
+  /* Asegurar que las tablas se impriman correctamente */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  table, th, td {
+    border: 1px solid #ddd;
+  }
+  
+  th, td {
+    padding: 8px;
+    text-align: left;
+  }
+  
+  /* Ajustar colores para impresión */
+  * {
+    color: black !important;
+    background-color: white !important;
+  }
+  
+  /* Forzar saltos de página donde sea necesario */
+  .page-break {
+    page-break-after: always;
+  }
+  
+  /* Manejo de imágenes */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Añadir número de página */
+  .footer-print {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 10pt;
+  }
+  
+  /* Ocultar mensajes de error y alerts */
+  .alert, .error, .notification {
+    display: none !important;
+  }
+}
