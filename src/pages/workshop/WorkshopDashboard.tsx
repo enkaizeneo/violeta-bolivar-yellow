@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,12 +16,11 @@ import {
   Package, 
   BarChart, 
   User, 
-  Tool, 
+  Wrench, 
   ShoppingCart,
   Truck
 } from "lucide-react";
 
-// Mocks de datos para el dashboard
 const MOCK_STATS = {
   orders: {
     total: 126,
@@ -48,7 +46,6 @@ const WorkshopDashboard = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // Verificar si el usuario está autenticado y tiene el rol correcto
     const userString = localStorage.getItem("currentUser");
     
     if (!userString) {
@@ -171,7 +168,7 @@ const WorkshopDashboard = () => {
               <span>Clientes</span>
             </TabsTrigger>
             <TabsTrigger value="technicians" className="flex items-center">
-              <Tool className="mr-2 h-4 w-4" />
+              <Wrench className="mr-2 h-4 w-4" />
               <span>Técnicos</span>
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex items-center">
@@ -210,7 +207,6 @@ const WorkshopDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Mostrar mensaje placeholder para otras pestañas */}
           <TabsContent value="clients" className="mt-6">
             <Card>
               <CardHeader>
@@ -233,7 +229,6 @@ const WorkshopDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Contenido similar para otras pestañas */}
           <TabsContent value="technicians" className="mt-6">
             <Card>
               <CardHeader>
