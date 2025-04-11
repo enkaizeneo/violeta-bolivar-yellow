@@ -16,7 +16,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <h3 className="text-2xl font-bold mb-4">
-              <span className="text-yellow">Orden</span>DeReparación
+              <span className="text-yellow">Neo</span>Sis
             </h3>
             <p className="mb-4 text-purple-light">
               Somos expertos en reparación y mantenimiento de equipos electrónicos con años de experiencia en el sector.
@@ -97,7 +97,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p>© {new Date().getFullYear()} OrdenDeReparación. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} NeoSis. Todos los derechos reservados.</p>
           <button
             onClick={scrollToTop}
             className="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
