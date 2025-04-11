@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import WorkshopForm, { Workshop } from "@/components/admin/WorkshopForm";
 
 // Estado inicial de talleres registrados
-const INITIAL_WORKSHOPS = [
+const INITIAL_WORKSHOPS: Workshop[] = [
   { id: 1, name: "Taller Central", location: "Caracas", status: "active", registrationDate: "2023-01-15" },
   { id: 2, name: "Taller Técnico Valencia", location: "Valencia", status: "pending", registrationDate: "2023-02-20" },
   { id: 3, name: "Servicio Express Maracay", location: "Maracay", status: "active", registrationDate: "2023-01-28" },
@@ -116,7 +116,7 @@ const AdminDashboard = () => {
       <header className="bg-white shadow-sm py-4 px-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-purple">
-            <span className="text-yellow">Orden</span>DeReparación
+            <span className="text-yellow">Neo</span>Sis
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">Admin: {currentUser.name}</span>
@@ -321,3 +321,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
