@@ -4,6 +4,9 @@ export interface Client {
   id: number;
   name: string;
   ci: string;
+  email?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface Technician {
