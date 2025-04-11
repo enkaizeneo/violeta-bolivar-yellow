@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export interface Workshop {
@@ -29,6 +30,20 @@ const WorkshopForm: React.FC<WorkshopFormProps> = ({
 }) => {
   const [name, setName] = useState(workshop?.name || '');
   const [location, setLocation] = useState(workshop?.location || '');
+  const [status, setStatus] = useState<"active" | "pending" | "inactive">(workshop?.status || 'pending');
+  
+  // Reset form when workshop prop changes
+  useEffect(() => {
+    if (workshop) {
+      setName(workshop.name);
+      setLocation(workshop.location);
+      setStatus(workshop.status);
+    } else {
+      setName('');
+      setLocation('');
+      setStatus('pending');
+    }
+  }, [workshop, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +56,10 @@ const WorkshopForm: React.FC<WorkshopFormProps> = ({
     onSave({
       name,
       location,
-      status: workshop?.status || 'pending'
+      status
     });
     
-    // Reset form
-    setName('');
-    setLocation('');
+    // Form reset is now handled by useEffect
   };
 
   return (
@@ -83,6 +96,27 @@ const WorkshopForm: React.FC<WorkshopFormProps> = ({
                 className="col-span-3"
               />
             </div>
+            
+            {workshop && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Estado
+                </Label>
+                <Select 
+                  value={status} 
+                  onValueChange={(value: "active" | "pending" | "inactive") => setStatus(value)}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Activo</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="inactive">Inactivo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           
           <DialogFooter>
