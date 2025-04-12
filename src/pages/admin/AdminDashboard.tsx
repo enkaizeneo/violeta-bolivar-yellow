@@ -4,25 +4,63 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Wrench, Building, BarChart } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import WorkshopForm, { Workshop } from "@/components/admin/WorkshopForm";
-
-// Estado inicial de talleres registrados
-const INITIAL_WORKSHOPS: Workshop[] = [
-  { id: 1, name: "Taller Central", location: "Caracas", status: "active", registrationDate: "2023-01-15" },
-  { id: 2, name: "Taller Técnico Valencia", location: "Valencia", status: "pending", registrationDate: "2023-02-20" },
-  { id: 3, name: "Servicio Express Maracay", location: "Maracay", status: "active", registrationDate: "2023-01-28" },
-  { id: 4, name: "Taller Digital Barquisimeto", location: "Barquisimeto", status: "inactive", registrationDate: "2023-03-05" },
-];
+import { fetchWorkshops, createWorkshop, updateWorkshop, deleteWorkshop } from "@/services/workshopService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [workshops, setWorkshops] = useState<Workshop[]>(INITIAL_WORKSHOPS);
   const [formOpen, setFormOpen] = useState(false);
   const [currentWorkshop, setCurrentWorkshop] = useState<Workshop | undefined>(undefined);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  // Fetch workshops
+  const { data: workshops = [], isLoading } = useQuery({
+    queryKey: ['workshops'],
+    queryFn: fetchWorkshops
+  });
+
+  // Mutations for workshops
+  const createWorkshopMutation = useMutation({
+    mutationFn: createWorkshop,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workshops'] });
+      toast.success("Taller registrado con éxito");
+      setFormOpen(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al registrar taller: ${error.message}`);
+    }
+  });
+
+  const updateWorkshopMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number, data: Partial<Omit<Workshop, 'id' | 'registrationDate'>> }) => 
+      updateWorkshop(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workshops'] });
+      toast.success("Taller actualizado con éxito");
+      setFormOpen(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al actualizar taller: ${error.message}`);
+    }
+  });
+
+  const deleteWorkshopMutation = useMutation({
+    mutationFn: deleteWorkshop,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workshops'] });
+      toast.success("Taller eliminado con éxito");
+      setDeleteConfirmId(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al eliminar taller: ${error.message}`);
+    }
+  });
 
   useEffect(() => {
     // Verificar si el usuario está autenticado y tiene el rol correcto
@@ -61,45 +99,29 @@ const AdminDashboard = () => {
   const handleSaveWorkshop = (workshopData: Omit<Workshop, 'id' | 'registrationDate'>) => {
     if (currentWorkshop) {
       // Actualizar taller existente
-      setWorkshops(workshops.map(w => 
-        w.id === currentWorkshop.id 
-          ? { ...w, ...workshopData }
-          : w
-      ));
-      toast.success("Taller actualizado con éxito");
+      updateWorkshopMutation.mutate({ 
+        id: currentWorkshop.id, 
+        data: workshopData 
+      });
     } else {
       // Agregar nuevo taller
-      const newWorkshop: Workshop = {
-        id: Math.max(...workshops.map(w => w.id), 0) + 1,
-        registrationDate: new Date().toISOString().split('T')[0],
-        ...workshopData
-      };
-      
-      setWorkshops([...workshops, newWorkshop]);
-      toast.success("Taller registrado con éxito");
+      createWorkshopMutation.mutate(workshopData);
     }
-    
-    setFormOpen(false);
   };
 
   const handleDeleteWorkshop = (id: number) => {
-    setWorkshops(workshops.filter(w => w.id !== id));
-    setDeleteConfirmId(null);
-    toast.success("Taller eliminado con éxito");
+    deleteWorkshopMutation.mutate(id);
   };
 
   const handleChangeStatus = (workshop: Workshop, newStatus: "active" | "pending" | "inactive") => {
-    setWorkshops(workshops.map(w => 
-      w.id === workshop.id 
-        ? { ...w, status: newStatus }
-        : w
-    ));
+    updateWorkshopMutation.mutate({ 
+      id: workshop.id, 
+      data: { status: newStatus } 
+    });
 
     const statusText = 
       newStatus === "active" ? "activado" : 
       newStatus === "pending" ? "puesto en pendiente" : "desactivado";
-    
-    toast.success(`Taller ${statusText} con éxito`);
   };
 
   const handleViewWorkshop = (id: number) => {
@@ -188,125 +210,137 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Ubicación</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Fecha de Registro</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {workshops.map((workshop) => (
-                  <TableRow key={workshop.id}>
-                    <TableCell>{workshop.id}</TableCell>
-                    <TableCell className="font-medium">{workshop.name}</TableCell>
-                    <TableCell>{workshop.location}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        workshop.status === "active" 
-                          ? "bg-green-100 text-green-800" 
-                          : workshop.status === "pending" 
-                            ? "bg-yellow-100 text-yellow-800" 
-                            : "bg-red-100 text-red-800"
-                      }`}>
-                        {workshop.status === "active" 
-                          ? "Activo" 
-                          : workshop.status === "pending" 
-                            ? "Pendiente" 
-                            : "Inactivo"}
-                      </span>
-                    </TableCell>
-                    <TableCell>{workshop.registrationDate}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewWorkshop(workshop.id)}
-                        >
-                          Ver
-                        </Button>
-                        
-                        {workshop.status === "pending" ? (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-green-600"
-                            onClick={() => handleChangeStatus(workshop, "active")}
-                          >
-                            Aprobar
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditWorkshop(workshop)}
-                          >
-                            Editar
-                          </Button>
-                        )}
-                        
-                        {workshop.status === "active" && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-amber-600"
-                            onClick={() => handleChangeStatus(workshop, "inactive")}
-                          >
-                            Desactivar
-                          </Button>
-                        )}
-                        
-                        {workshop.status === "inactive" && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-green-600"
-                            onClick={() => handleChangeStatus(workshop, "active")}
-                          >
-                            Reactivar
-                          </Button>
-                        )}
-                        
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="text-red-600"
-                          onClick={() => setDeleteConfirmId(workshop.id)}
-                        >
-                          Eliminar
-                        </Button>
-                        
-                        {deleteConfirmId === workshop.id && (
+          {isLoading ? (
+            <div className="text-center py-6">Cargando talleres...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Ubicación</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha de Registro</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {workshops.length > 0 ? (
+                    workshops.map((workshop) => (
+                      <TableRow key={workshop.id}>
+                        <TableCell>{workshop.id}</TableCell>
+                        <TableCell className="font-medium">{workshop.name}</TableCell>
+                        <TableCell>{workshop.location}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            workshop.status === "active" 
+                              ? "bg-green-100 text-green-800" 
+                              : workshop.status === "pending" 
+                                ? "bg-yellow-100 text-yellow-800" 
+                                : "bg-red-100 text-red-800"
+                          }`}>
+                            {workshop.status === "active" 
+                              ? "Activo" 
+                              : workshop.status === "pending" 
+                                ? "Pendiente" 
+                                : "Inactivo"}
+                          </span>
+                        </TableCell>
+                        <TableCell>{workshop.registrationDate}</TableCell>
+                        <TableCell>
                           <div className="flex space-x-2">
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleDeleteWorkshop(workshop.id)}
-                            >
-                              Confirmar
-                            </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => setDeleteConfirmId(null)}
+                              onClick={() => handleViewWorkshop(workshop.id)}
                             >
-                              Cancelar
+                              Ver
                             </Button>
+                            
+                            {workshop.status === "pending" ? (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-green-600"
+                                onClick={() => handleChangeStatus(workshop, "active")}
+                              >
+                                Aprobar
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditWorkshop(workshop)}
+                              >
+                                Editar
+                              </Button>
+                            )}
+                            
+                            {workshop.status === "active" && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-amber-600"
+                                onClick={() => handleChangeStatus(workshop, "inactive")}
+                              >
+                                Desactivar
+                              </Button>
+                            )}
+                            
+                            {workshop.status === "inactive" && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-green-600"
+                                onClick={() => handleChangeStatus(workshop, "active")}
+                              >
+                                Reactivar
+                              </Button>
+                            )}
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-red-600"
+                              onClick={() => setDeleteConfirmId(workshop.id)}
+                            >
+                              Eliminar
+                            </Button>
+                            
+                            {deleteConfirmId === workshop.id && (
+                              <div className="flex space-x-2">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => handleDeleteWorkshop(workshop.id)}
+                                >
+                                  Confirmar
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setDeleteConfirmId(null)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        No hay talleres registrados.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
       </main>
       
@@ -321,4 +355,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-
