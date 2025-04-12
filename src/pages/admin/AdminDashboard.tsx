@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -19,11 +18,22 @@ const AdminDashboard = () => {
   const [currentWorkshop, setCurrentWorkshop] = useState<Workshop | undefined>(undefined);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  // Fetch workshops
-  const { data: workshops = [], isLoading } = useQuery({
+  // Fetch workshops with error handling
+  const { data: workshops = [], isLoading, error: workshopsError } = useQuery({
     queryKey: ['workshops'],
-    queryFn: fetchWorkshops
+    queryFn: fetchWorkshops,
+    onError: (error: Error) => {
+      console.error('Error fetching workshops:', error);
+      toast.error(`Error loading workshops: ${error.message}`);
+    }
   });
+
+  // Display error notification if workshops can't be loaded
+  useEffect(() => {
+    if (workshopsError) {
+      toast.error(`Failed to load workshops. Please check your connection.`);
+    }
+  }, [workshopsError]);
 
   // Mutations for workshops
   const createWorkshopMutation = useMutation({
@@ -65,21 +75,26 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Verificar si el usuario está autenticado y tiene el rol correcto
-    const userString = localStorage.getItem("currentUser");
-    
-    if (!userString) {
+    try {
+      const userString = localStorage.getItem("currentUser");
+      
+      if (!userString) {
+        navigate("/login");
+        return;
+      }
+      
+      const user = JSON.parse(userString);
+      
+      if (user.role !== "admin") {
+        navigate("/login");
+        return;
+      }
+      
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Error authenticating user:", error);
       navigate("/login");
-      return;
     }
-    
-    const user = JSON.parse(userString);
-    
-    if (user.role !== "admin") {
-      navigate("/login");
-      return;
-    }
-    
-    setCurrentUser(user);
   }, [navigate]);
 
   const handleLogout = () => {

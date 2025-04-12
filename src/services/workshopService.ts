@@ -3,16 +3,21 @@ import { supabase } from '@/lib/supabase';
 import { Workshop } from '@/components/admin/WorkshopForm';
 
 export const fetchWorkshops = async (): Promise<Workshop[]> => {
-  const { data, error } = await supabase
-    .from('workshops')
-    .select('*');
-  
-  if (error) {
-    console.error('Error fetching workshops:', error);
-    throw new Error(error.message);
+  try {
+    const { data, error } = await supabase
+      .from('workshops')
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching workshops:', error);
+      throw new Error(error.message);
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch workshops:', error);
+    return [];
   }
-  
-  return data || [];
 };
 
 export const createWorkshop = async (workshop: Omit<Workshop, 'id' | 'registrationDate'>): Promise<Workshop> => {
