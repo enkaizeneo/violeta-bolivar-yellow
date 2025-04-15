@@ -16,7 +16,9 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'), // Asegúrate de tener esto
+      '@backend': path.resolve(__dirname, './backend/src') // Opcional pero recomendado
     },
   },
 }));
+
